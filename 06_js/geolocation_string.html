@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Reverse Geocode(Event:Click!)</title>
+<style>html,body{height:100%;}body{padding:0;margin:0;background:#333;}h1{padding:0;margin:0;font-size:50%;color:white;}#address{overflow: auto;height: 100%;}#address div{border-bottom: 1px solid #888;font-size:12px;}#view_area{float:left;color:#fff;width:27%;margin-left: 20px;}</style>
+</head>
+<body>
+
+
+<!-- MAP[START] -->
+<div id="myMap" style="position:relative;float:left;width:70%;height:98%;"></div>
+<div id="view_area">
+    <h3>Reverse Geocode(Event:Click!)</h3>
+
+    <p id="loclng"><p id="address"></p></p>
+</div>
+<!-- MAP[END] -->
+
+<script src='https://www.bing.com/api/maps/mapcontrol?callback=GetMap&key=Ar_gsuERLHZ2ja9vOLdSAprLgO8xCZjZL1bcnrSgpqhMOY0QY-6mBhn4216TLbbp' async defer></script>
+<script>
+    let map, searchManager,loc, i=0;
+    function GetMap() {
+        map = new Microsoft.Maps.Map('#myMap', {
+            center: new Microsoft.Maps.Location(35.25316608491925, 139.6803455413144),
+            zoom: 15
+        });
+        loc = map.getCenter();
+        reverseGeocode();
+
+        Microsoft.Maps.Events.addHandler(map, 'click', function (e) {
+            loc = e.location;
+            reverseGeocode(); 
+        });
+        PanningOverlay.prototype = new Microsoft.Maps.CustomOverlay({ beneathLabels : false });
+        function PanningOverlay() {
+            this.panUpBtn = document.createElement('button');
+            this.panUpBtn.type = 'button';
+            this.panUpBtn.innerText = '↑';
+            this.panUpBtn.onclick = function () {
+                panMap('up');
+            };
+            this.panDownBtn = document.createElement('button');
+            this.panDownBtn.type = 'button';
+            this.panDownBtn.innerText = '↓';
+            this.panDownBtn.onclick = function () {
+                panMap('down');
+            };
+            this.panLeftBtn = document.createElement('button');
+            this.panLeftBtn.type = 'button';
+            this.panLeftBtn.innerText = '←';
+            this.panLeftBtn.onclick = function () {
+                panMap('left');
+            };
+            this.panRightBtn = document.createElement('button');
+            this.panRightBtn.type = 'button';
+            this.panRightBtn.innerText = '→';
+            this.panRightBtn.onclick = function () {
+                panMap('right');
+            };
+        }
+        PanningOverlay.prototype.onAdd = function () {
+            const container = document.createElement('div');
+            container.appendChild(this.panUpBtn);
+            container.appendChild(this.panDownBtn);
+            container.appendChild(this.panLeftBtn);
+            container.appendChild(this.panRightBtn);
+            container.style.position = 'absolute';
+            container.style.top = '10px';
+            container.style.left = '10px';
+            this.setHtmlElement(container);
+        };
+        const overlay = new PanningOverlay();
+        map.layers.insert(overlay);
+    }
+
+    function reverseGeocode() {
+        if (!searchManager) {
+            Microsoft.Maps.loadModule('Microsoft.Maps.Search', function () {
+                searchManager = new Microsoft.Maps.Search.SearchManager(map);
+                reverseGeocode();
+            });
+        } else {
+            const searchRequest = {
+                location: loc,
+                callback: function (r) {
+                    let pin = new Microsoft.Maps.Pushpin(loc,{
+                        title: r.name,
+                        text: `${++i}` 
+                    });
+                    map.entities.push(pin);
+
+                    const div = document.createElement("div");
+                    div.innerText=`(${i}) ${r.name}  ${loc}`;
+                    document.querySelector("#address").insertBefore(div, document.querySelector("#address").firstElementChild);
+                },
+                errorCallback: function (e) {
+                    alert("Unable to reverse geocode location.");
+                }
+            };
+            searchManager.reverseGeocode(searchRequest);
+        }
+      }
+    function panMap(dir) {
+        let dx = 0, dy = 0;
+        switch (dir) {
+            case 'up':
+                dy = 30;
+                break;
+            case 'down':
+                dy = -30;
+                break;
+            case 'left':
+                dx = 30;
+                break;
+            case 'right':
+                dx = -30;
+                break;
+        }
+        map.setView({
+            center: map.getCenter(),
+            centerOffset: new Microsoft.Maps.Point(dx, dy)
+        });
+    }
+</script>
+</body>
+</html>
